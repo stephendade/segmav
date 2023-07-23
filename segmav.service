@@ -1,0 +1,14 @@
+[Unit]
+Description=SEGMAV Server Service
+After=network.target
+
+[Service]
+Environment="LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgomp.so.1"
+WorkingDirectory=/home/stephen/segmav
+ExecStart=/usr/bin/python3 mavsegmav.py --input-flip=rotate-180 csi://0 file://navout.mp4
+Restart=on-failure
+User=stephen
+
+[Install]
+WantedBy=multi-user.target
+
