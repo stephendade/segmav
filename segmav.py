@@ -234,7 +234,9 @@ class SegThread(threading.Thread):
             lenvec = np.linalg.norm(np.array(centroids[1]) - np.array(centroids[0]))
             bearing_rel = np.arctan((centroids[1][0] - centroids[0][0]) / (centroids[1][1] - centroids[0][1]))
             # print("Len={0:.0f}, Bearing={1:.1f}".format(lenvec, np.rad2deg(bearing_rel)))
-            if lenvec < 25 and bearing_rel == np.clip(bearing_rel, -np.pi/4, np.pi/4):
+            # print("Grid is " + str(self.net.GetGridSize()))
+            # print("Thres is " + str(1.6 * self.net.GetGridSize()[1]))
+            if lenvec < 1.6*self.net.GetGridSize()[1] and bearing_rel == np.clip(bearing_rel, -np.pi/4, np.pi/4):
 
                 # and draw line between centroids
                 for i in range(len(centroids)-1):
@@ -324,7 +326,7 @@ if __name__ == '__main__':
     parser.add_argument("--network", type=str, default="fcn-resnet18-cityscapes-1024x512", help="pre-trained model to load")
     parser.add_argument("--filter-mode", type=str, default="point", choices=["point", "linear"], help="filtering mode used during visualization, options are:\n  'point' or 'linear' (default: 'point')")
     parser.add_argument("--ignore-class", type=str, default="void", help="optional name of class to ignore in the visualization results (default: 'void')")
-    parser.add_argument("--alpha", type=float, default=5.0, help="alpha blending value to use during overlay, between 0.0 and 255.0 (default: 150.0)")
+    parser.add_argument("--alpha", type=float, default=64.0, help="alpha blending value to use during overlay, between 0.0 and 255.0 (default: 150.0)")
     parser.add_argument("--targetclass", type=int, default=3, help="The item class to track")
 
     is_headless = ["--headless"] if sys.argv[0].find('console.py') != -1 else [""]
