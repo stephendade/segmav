@@ -39,7 +39,8 @@ def set_target(conn, speed, yaw):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Test for send vel and yaw to Rover")
+    parser = argparse.ArgumentParser(
+        description="Test for send vel and yaw to Rover")
     parser.add_argument(
         "--device", type=str, default="udpin:127.0.0.1:14550", help="MAVLink connection string")
     parser.add_argument("--baud", type=int, default=115200,
@@ -121,7 +122,8 @@ if __name__ == '__main__':
                 target_bearing = (curHeading + bearing) % 360
             else:
                 target_bearing = -1
-            print("Rel is {0:.0f} deg, cur is {2:.0f}, Target is {1:.0f}".format(bearing, target_bearing, curHeading))
+            print("Rel is {0:.0f} deg, cur is {2:.0f}, Target is {1:.0f}".format(
+                bearing, target_bearing, curHeading))
             # send command to rover
             set_target(conn, args.vel, np.deg2rad(bearing))
 

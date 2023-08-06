@@ -36,7 +36,8 @@ def play_tune(conn, tune):
     '''
     Tell the flight controller to play a tune on the buzzer, if fitted
     '''
-    conn.mav.play_tune_send(conn.target_system, conn.target_component, bytes(tune, "ascii"))
+    conn.mav.play_tune_send(
+        conn.target_system, conn.target_component, bytes(tune, "ascii"))
 
 
 # https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED
@@ -60,8 +61,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Segmentation-based navigation for Ardupilot",
                                      formatter_class=argparse.RawTextHelpFormatter,
                                      epilog=segNet.Usage() + videoSource.Usage() + videoOutput.Usage())
-    parser.add_argument("input", type=str, default="csi://0", nargs='?', help="URI of the input stream")
-    parser.add_argument("output", type=str, default="rtp://192.168.1.124:5400", nargs='?', help="URI of the output stream")
+    parser.add_argument("input", type=str, default="csi://0",
+                        nargs='?', help="URI of the input stream")
+    parser.add_argument("output", type=str, default="rtp://192.168.1.124:5400",
+                        nargs='?', help="URI of the output stream")
     parser.add_argument(
         "--device", type=str, default="udpin:127.0.0.1:14550", help="MAVLink connection string")
     parser.add_argument("--baud", type=int, default=115200,
@@ -76,14 +79,21 @@ if __name__ == '__main__':
                         help="RC PWM mid value")
     parser.add_argument("--pwmhigh", type=int, default=2000,
                         help="RC PWM high value")
-    parser.add_argument("--network", type=str, default="fcn-resnet18-cityscapes-1024x512", help="pre-trained model to load")
-    parser.add_argument("--filter-mode", type=str, default="point", choices=["point", "linear"], help="filtering mode used during visualization, options are:\n  'point' or 'linear' (default: 'point')")
-    parser.add_argument("--ignore-class", type=str, default="void", help="optional name of class to ignore in the visualization results (default: 'void')")
-    parser.add_argument("--alpha", type=float, default=80.0, help="alpha blending value to use during overlay, between 0.0 and 255.0 (default: 150.0)")
-    parser.add_argument("--targetclass", type=int, default=3, help="The item class to track")
-    parser.add_argument("--vel", type=float, default=0.6, help="Forward velocity setpoint")
+    parser.add_argument("--network", type=str,
+                        default="fcn-resnet18-cityscapes-1024x512", help="pre-trained model to load")
+    parser.add_argument("--filter-mode", type=str, default="point", choices=[
+                        "point", "linear"], help="filtering mode used during visualization, options are:\n  'point' or 'linear' (default: 'point')")
+    parser.add_argument("--ignore-class", type=str, default="void",
+                        help="optional name of class to ignore in the visualization results (default: 'void')")
+    parser.add_argument("--alpha", type=float, default=80.0,
+                        help="alpha blending value to use during overlay, between 0.0 and 255.0 (default: 150.0)")
+    parser.add_argument("--targetclass", type=int, default=3,
+                        help="The item class to track")
+    parser.add_argument("--vel", type=float, default=0.6,
+                        help="Forward velocity setpoint")
 
-    is_headless = ["--headless"] if sys.argv[0].find('console.py') != -1 else [""]
+    is_headless = [
+        "--headless"] if sys.argv[0].find('console.py') != -1 else [""]
 
     time_of_last_bearing_check = 0
 
@@ -143,37 +153,49 @@ if __name__ == '__main__':
                         play_tune(conn, "L12DD")  # two fast medium tones
                     if abs(args.pwmmid - getattr(msg, fieldname)) < 50:
                         if not curThread:
-                            print("RC{0} changed to {1}. Doing RECORD action".format(args.rc, getattr(msg, fieldname)))
-                            filename = "record-{0}.mp4".format(datetime.now().strftime("%Y%m%d-%H%M%S"))
+                            print("RC{0} changed to {1}. Doing RECORD action".format(
+                                args.rc, getattr(msg, fieldname)))
+                            filename = "record-{0}.mp4".format(
+                                datetime.now().strftime("%Y%m%d-%H%M%S"))
                             print("Filename is {0}".format(filename))
                             time_of_last_bearing_check = 0
                             try:
                                 # Start Record thread
-                                curThread = VideoThread(args, sys.argv, filename)
+                                curThread = VideoThread(
+                                    args, sys.argv, filename)
                                 curThread.start()
-                                send_msg_to_gcs(conn, "Started {0}".format(filename))
-                                play_tune(conn, "L12DD")  # two fast medium tones
+                                send_msg_to_gcs(
+                                    conn, "Started {0}".format(filename))
+                                # two fast medium tones
+                                play_tune(conn, "L12DD")
                             except Exception as ex:
                                 print(ex)
-                                play_tune(conn, "L16FFF")  # three very fast, high tones
+                                # three very fast, high tones
+                                play_tune(conn, "L16FFF")
                         else:
                             print("Can't start recording. Process still active")
-                            send_msg_to_gcs(conn, "Can't start. Record still active")
-                            play_tune(conn, "L16FFF")  # three very fast, high tones
+                            send_msg_to_gcs(
+                                conn, "Can't start. Record still active")
+                            # three very fast, high tones
+                            play_tune(conn, "L16FFF")
                     if abs(args.pwmhigh - getattr(msg, fieldname)) < 50:
                         if not curThread:
                             # Start Nav thread
                             curThread = SegThread(args, sys.argv, is_headless)
                             curThread.start()
-                            print("RC{0} changed to {1}. Doing SEGMAV action".format(args.rc, getattr(msg, fieldname)))
+                            print("RC{0} changed to {1}. Doing SEGMAV action".format(
+                                args.rc, getattr(msg, fieldname)))
                             send_msg_to_gcs(conn, "Started NAV")
                             conn.set_mode("GUIDED")
                             time_of_last_bearing_check = time.time()
                             play_tune(conn, "L12DD")  # two fast medium tones
                         else:
-                            print("Can't start SEGMAV. Recording process still active")
-                            send_msg_to_gcs(conn, "Can't start. NAV still active")
-                            play_tune(conn, "L16FFF")  # three very fast, high tones
+                            print(
+                                "Can't start SEGMAV. Recording process still active")
+                            send_msg_to_gcs(
+                                conn, "Can't start. NAV still active")
+                            # three very fast, high tones
+                            play_tune(conn, "L16FFF")
                     rc_level = getattr(msg, fieldname)
         if exit_event.is_set():
             if curThread:
@@ -188,7 +210,8 @@ if __name__ == '__main__':
                     target_bearing = (curHeading + bearing) % 360
                 else:
                     target_bearing = -1
-                send_msg_to_gcs(conn, "Rel is {0:.0f} deg, cur is {2:.0f}, Target is {1:.0f}".format(bearing, target_bearing, curHeading))
+                send_msg_to_gcs(conn, "Rel is {0:.0f} deg, cur is {2:.0f}, Target is {1:.0f}".format(
+                    bearing, target_bearing, curHeading))
                 # send command to rover. Will only affect in GUIDED mode set_position_target_local_ned
                 set_target(conn, args.vel, np.deg2rad(bearing))
 

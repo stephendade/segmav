@@ -35,7 +35,8 @@ def signal_handler(signum, frame):
 def ComputeStats(net, grid_width, grid_height, class_mask_np, num_classes):
 
     # compute the number of times each class occurs in the mask
-    class_histogram, _ = np.histogram(class_mask_np, bins=num_classes, range=(0, num_classes-1))
+    class_histogram, _ = np.histogram(
+        class_mask_np, bins=num_classes, range=(0, num_classes-1))
 
     print('grid size:   {:d}x{:d}'.format(grid_width, grid_height))
     print('num classes: {:d}'.format(num_classes))
@@ -45,19 +46,23 @@ def ComputeStats(net, grid_width, grid_height, class_mask_np, num_classes):
     print('-----------------------------------------')
 
     for n in range(num_classes):
-        percentage = (float(class_histogram[n]) / float(grid_width * grid_height))*100
-        print(' {:>2d}  {:<18s} {:>3d}   {:f}'.format(n, net.GetClassDesc(n), class_histogram[n], percentage))
+        percentage = (
+            float(class_histogram[n]) / float(grid_width * grid_height))*100
+        print(' {:>2d}  {:<18s} {:>3d}   {:f}'.format(
+            n, net.GetClassDesc(n), class_histogram[n], percentage))
 
 
 class VideoThread(threading.Thread):
     '''
     Thread to record video streams
     '''
+
     def __init__(self, args, aargv, filename):
         threading.Thread.__init__(self)
         self.should_exit = False
         self.input = videoSource(args.input, argv=aargv)
-        self.output = videoOutput("file://{0}".format(filename), argv=aargv+["--headless"])
+        self.output = videoOutput(
+            "file://{0}".format(filename), argv=aargv+["--headless"])
 
     def exit(self):
         self.should_exit = True
@@ -89,6 +94,7 @@ class SegThread(threading.Thread):
     '''
     Thread to segment video streams
     '''
+
     def __init__(self, args, aargv, is_headless):
         threading.Thread.__init__(self)
         self.should_exit = False
@@ -103,7 +109,8 @@ class SegThread(threading.Thread):
         # create video output. Add datetime if using file
         if args.output.startswith("file://"):
             name, ext = os.path.splitext(args.output)
-            filename = "{0}-{1}{2}".format(name, datetime.now().strftime("%Y%m%d-%H%M%S"), ext)
+            filename = "{0}-{1}{2}".format(name,
+                                           datetime.now().strftime("%Y%m%d-%H%M%S"), ext)
             print(filename)
             self.output = videoOutput(filename, argv=aargv+["--headless"])
         else:
@@ -153,7 +160,8 @@ class SegThread(threading.Thread):
                                                format=img_input.format)
             if not self.class_mask:
                 grid_width, grid_height = self.net.GetGridSize()
-                self.class_mask = cudaAllocMapped(width=grid_width, height=grid_height, format="gray8")
+                self.class_mask = cudaAllocMapped(
+                    width=grid_width, height=grid_height, format="gray8")
                 self.class_mask_np = cudaToNumpy(self.class_mask)
 
             # process the segmentation network
@@ -172,7 +180,8 @@ class SegThread(threading.Thread):
             # ComputeStats(net, grid_width, grid_height, class_mask_np, net.GetNumClasses())
 
             # mask to target class
-            mask = cv2.inRange(self.class_mask_np, self.args.targetclass, self.args.targetclass)
+            mask = cv2.inRange(self.class_mask_np,
+                               self.args.targetclass, self.args.targetclass)
 
             # zoom and blur
             scale_percent = 400  # percent of original size
@@ -181,12 +190,14 @@ class SegThread(threading.Thread):
             dim = (width, height)
             maskzoom = cv2.resize(mask, dim, interpolation=cv2.INTER_NEAREST)
 
-            #kernel = np.ones((2, 2), np.uint8)
-            maskzoomblur = maskzoom #cv2.morphologyEx(maskzoom, cv2.MORPH_OPEN, kernel)
+            # kernel = np.ones((2, 2), np.uint8)
+            # cv2.morphologyEx(maskzoom, cv2.MORPH_OPEN, kernel)
+            maskzoomblur = maskzoom
 
             # get extents of object
             # find contours in the binary image
-            contours, hierarchy = cv2.findContours(maskzoomblur, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            contours, hierarchy = cv2.findContours(
+                maskzoomblur, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
             # No contours found, go to next image
             if len(contours) == 0:
@@ -197,14 +208,19 @@ class SegThread(threading.Thread):
             # get (and show) largest countour. Need to simplify contour a bit to reduce noise
             contourLargest = max(contours, key=cv2.contourArea)
             perimeter = cv2.arcLength(contourLargest, True)
-            contourLargest = cv2.approxPolyDP(contourLargest, 0.03 * perimeter, True)
+            contourLargest = cv2.approxPolyDP(
+                contourLargest, 0.03 * perimeter, True)
             for i in range(0, len(contourLargest)):
                 curpoint = contourLargest[i-1][0]
                 nextpoint = contourLargest[i][0]
-                overlayX1 = int((curpoint[0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
-                overlayY1 = int((curpoint[1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
-                overlayX2 = int((nextpoint[0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
-                overlayY2 = int((nextpoint[1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
+                overlayX1 = int(
+                    (curpoint[0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
+                overlayY1 = int(
+                    (curpoint[1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
+                overlayX2 = int(
+                    (nextpoint[0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
+                overlayY2 = int(
+                    (nextpoint[1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
                 cudaDrawLine(self.overlay,
                              [overlayX1, overlayY1],
                              [overlayX2, overlayY2],
@@ -216,15 +232,20 @@ class SegThread(threading.Thread):
             stripregions = []
             numregions = 2
             for i in range(numregions):
-                stripregions.append(((0, y1 + int(i*(h/numregions))), (width, y1 + int((i+1)*(h/numregions)))))
+                stripregions.append(
+                    ((0, y1 + int(i*(h/numregions))), (width, y1 + int((i+1)*(h/numregions)))))
 
             # and display the strips
             for strip in stripregions:
                 # cv2.rectangle(maskzoomblur, strip[0], strip[1], (128, 128, 128), 1)
-                overlayX1 = int((strip[0][0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
-                overlayY1 = int((strip[0][1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
-                overlayX2 = int((strip[1][0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
-                overlayY2 = int((strip[1][1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
+                overlayX1 = int(
+                    (strip[0][0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
+                overlayY1 = int(
+                    (strip[0][1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
+                overlayX2 = int(
+                    (strip[1][0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
+                overlayY2 = int(
+                    (strip[1][1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
                 cudaDrawRect(self.overlay,
                              (overlayX1, overlayY1, overlayX2, overlayY2),
                              (0, 0, 0, 0),
@@ -239,14 +260,19 @@ class SegThread(threading.Thread):
                 centroids.append(((cX, cY + strip[0][1])))
                 # cv2.circle(maskzoomblur, (cX, cY + strip[0][1]), 2, (128, 128, 128), -1)
                 # Video overlay
-                overlayX = int((cX/(scale_percent/100)) * (img_input.shape[1] / grid_width))
-                overlayY = int(((cY + strip[0][1])/(scale_percent/100)) * (img_input.shape[0] / grid_height))
-                cudaDrawCircle(self.overlay, (overlayX, overlayY), 10, (255, 255, 255))
+                overlayX = int((cX/(scale_percent/100)) *
+                               (img_input.shape[1] / grid_width))
+                overlayY = int(
+                    ((cY + strip[0][1])/(scale_percent/100)) * (img_input.shape[0] / grid_height))
+                cudaDrawCircle(self.overlay, (overlayX, overlayY),
+                               10, (255, 255, 255))
 
             # do a bit of quality control. Vector len should be less than 20 and bearing +-45deg
             # Vector is the bottom two centroids
-            lenvec = np.linalg.norm(np.array(centroids[1]) - np.array(centroids[0]))
-            bearing_rel = np.arctan((centroids[1][0] - centroids[0][0]) / (centroids[1][1] - centroids[0][1]))
+            lenvec = np.linalg.norm(
+                np.array(centroids[1]) - np.array(centroids[0]))
+            bearing_rel = np.arctan(
+                (centroids[1][0] - centroids[0][0]) / (centroids[1][1] - centroids[0][1]))
             # print("Len={0:.0f}, Bearing={1:.1f}".format(lenvec, np.rad2deg(bearing_rel)))
             # print("Grid is " + str(self.net.GetGridSize()))
             # print("Thres is " + str(1.6 * self.net.GetGridSize()[1]))
@@ -256,10 +282,14 @@ class SegThread(threading.Thread):
                 for i in range(len(centroids)):
                     # cv2.line(maskzoomblur, centroids[i], centroids[i+1], (128, 128, 128), 2)
                     # Video overlay
-                    overlayX1 = int((centroids[i-1][0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
-                    overlayY1 = int((centroids[i-1][1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
-                    overlayX2 = int((centroids[i][0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
-                    overlayY2 = int((centroids[i][1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
+                    overlayX1 = int(
+                        (centroids[i-1][0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
+                    overlayY1 = int(
+                        (centroids[i-1][1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
+                    overlayX2 = int(
+                        (centroids[i][0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
+                    overlayY2 = int(
+                        (centroids[i][1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
                     cudaDrawLine(self.overlay,
                                  [overlayX1, overlayY1],
                                  [overlayX2, overlayY2],
@@ -280,7 +310,8 @@ class SegThread(threading.Thread):
             #     if k == 27:
             #         break
             if self.getBearing() != None:
-                bearingstr = "Rel bearing: {0:.1f} deg".format(self.getBearing())
+                bearingstr = "Rel bearing: {0:.1f} deg".format(
+                    self.getBearing())
             else:
                 bearingstr = "Rel bearing: N/A"
             self.font.OverlayText(self.overlay,
@@ -294,7 +325,8 @@ class SegThread(threading.Thread):
             self.output.Render(self.overlay)
 
             # update the title bar
-            self.output.SetStatus("{:s} | Network {:.0f} FPS".format(self.args.network, self.net.GetNetworkFPS()))
+            self.output.SetStatus("{:s} | Network {:.0f} FPS".format(
+                self.args.network, self.net.GetNetworkFPS()))
 
             # exit on input/output EOS
             if not self.input.IsStreaming() or not self.output.IsStreaming():
@@ -310,19 +342,22 @@ class SegThread(threading.Thread):
     Get current calculated bearing in degrees. return None is there's been no update in 2 sec
     -ve is ccw direction, +ve is cw direction
     '''
+
     def getBearing(self):
         with self.threadLock:
             if time.time() - self.timeOfLastUpdate > 2:
-                print("No bearing in {0:.2f} sec".format(time.time() - self.timeOfLastUpdate))
+                print("No bearing in {0:.2f} sec".format(
+                    time.time() - self.timeOfLastUpdate))
                 return None
             avg_bearing = -0.7 * np.mean(self.bearings)
             print("Rel bearing is {0:.2f}deg".format(np.rad2deg(avg_bearing)))
-            #print(self.bearings)
+            # print(self.bearings)
             return np.rad2deg(avg_bearing)
 
     '''
     Get the average latency of the image capturing and processing
     '''
+
     def getLatency(self):
         with self.threadLock:
             avg_latency = time.time() - np.mean(self.timeOfCapture)
@@ -335,15 +370,23 @@ if __name__ == '__main__':
                                      formatter_class=argparse.RawTextHelpFormatter,
                                      epilog=segNet.Usage() + videoSource.Usage() + videoOutput.Usage())
 
-    parser.add_argument("input", type=str, default="csi://0", nargs='?', help="URI of the input stream")
-    parser.add_argument("output", type=str, default="rtp://192.168.1.124:5400", nargs='?', help="URI of the output stream")
-    parser.add_argument("--network", type=str, default="fcn-resnet18-cityscapes-1024x512", help="pre-trained model to load")
-    parser.add_argument("--filter-mode", type=str, default="point", choices=["point", "linear"], help="filtering mode used during visualization, options are:\n  'point' or 'linear' (default: 'point')")
-    parser.add_argument("--ignore-class", type=str, default="void", help="optional name of class to ignore in the visualization results (default: 'void')")
-    parser.add_argument("--alpha", type=float, default=80.0, help="alpha blending value to use during overlay, between 0.0 and 255.0 (default: 150.0)")
-    parser.add_argument("--targetclass", type=int, default=3, help="The item class to track")
+    parser.add_argument("input", type=str, default="csi://0",
+                        nargs='?', help="URI of the input stream")
+    parser.add_argument("output", type=str, default="rtp://192.168.1.124:5400",
+                        nargs='?', help="URI of the output stream")
+    parser.add_argument("--network", type=str,
+                        default="fcn-resnet18-cityscapes-1024x512", help="pre-trained model to load")
+    parser.add_argument("--filter-mode", type=str, default="point", choices=[
+                        "point", "linear"], help="filtering mode used during visualization, options are:\n  'point' or 'linear' (default: 'point')")
+    parser.add_argument("--ignore-class", type=str, default="void",
+                        help="optional name of class to ignore in the visualization results (default: 'void')")
+    parser.add_argument("--alpha", type=float, default=80.0,
+                        help="alpha blending value to use during overlay, between 0.0 and 255.0 (default: 150.0)")
+    parser.add_argument("--targetclass", type=int, default=3,
+                        help="The item class to track")
 
-    is_headless = ["--headless"] if sys.argv[0].find('console.py') != -1 else [""]
+    is_headless = [
+        "--headless"] if sys.argv[0].find('console.py') != -1 else [""]
 
     try:
         args = parser.parse_known_args()[0]
