@@ -180,7 +180,7 @@ class SegThread(threading.Thread):
             # ComputeStats(net, grid_width, grid_height, class_mask_np, net.GetNumClasses())
 
             # mask to target class
-            mask = cv2.inRange(self.class_mask_np,
+            mask = cv2.inRange(self.class_mask_np,  # pylint: disable=no-member
                                self.args.targetclass, self.args.targetclass)
 
             # zoom and blur
@@ -188,7 +188,7 @@ class SegThread(threading.Thread):
             width = int(mask.shape[1] * scale_percent / 100)
             height = int(mask.shape[0] * scale_percent / 100)
             dim = (width, height)
-            maskzoom = cv2.resize(mask, dim, interpolation=cv2.INTER_NEAREST)
+            maskzoom = cv2.resize(mask, dim, interpolation=cv2.INTER_NEAREST)  # pylint: disable=no-member
 
             # kernel = np.ones((2, 2), np.uint8)
             # cv2.morphologyEx(maskzoom, cv2.MORPH_OPEN, kernel)
@@ -196,8 +196,8 @@ class SegThread(threading.Thread):
 
             # get extents of object
             # find contours in the binary image
-            contours, hierarchy = cv2.findContours(
-                maskzoomblur, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            contours, hierarchy = cv2.findContours(  # pylint: disable=no-member
+                maskzoomblur, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # pylint: disable=no-member
 
             # No contours found, go to next image
             if len(contours) == 0:
@@ -206,9 +206,9 @@ class SegThread(threading.Thread):
                 continue
 
             # get (and show) largest countour. Need to simplify contour a bit to reduce noise
-            contourLargest = max(contours, key=cv2.contourArea)
-            perimeter = cv2.arcLength(contourLargest, True)
-            contourLargest = cv2.approxPolyDP(
+            contourLargest = max(contours, key=cv2.contourArea)  # pylint: disable=no-member
+            perimeter = cv2.arcLength(contourLargest, True)  # pylint: disable=no-member
+            contourLargest = cv2.approxPolyDP(  # pylint: disable=no-member
                 contourLargest, 0.03 * perimeter, True)
             for i in range(0, len(contourLargest)):
                 curpoint = contourLargest[i-1][0]
@@ -228,7 +228,7 @@ class SegThread(threading.Thread):
                              3)  # (x1,y1), (x2,y2), color, thickness
 
             # Split ROI into horizontal strips
-            x1, y1, w, h = cv2.boundingRect(contourLargest)
+            x1, y1, w, h = cv2.boundingRect(contourLargest)  # pylint: disable=no-member
             stripregions = []
             numregions = 2
             for i in range(numregions):
@@ -254,7 +254,7 @@ class SegThread(threading.Thread):
             # get centroid of each strip
             centroids = []
             for strip in stripregions:
-                M = cv2.moments(maskzoomblur[:][strip[0][1]:strip[1][1]])
+                M = cv2.moments(maskzoomblur[:][strip[0][1]:strip[1][1]])  # pylint: disable=no-member
                 cX = int(M["m10"] / M["m00"])
                 cY = int(M["m01"] / M["m00"])
                 centroids.append(((cX, cY + strip[0][1])))
@@ -331,7 +331,7 @@ class SegThread(threading.Thread):
             # exit on input/output EOS
             if not self.input.IsStreaming() or not self.output.IsStreaming():
                 if not self.is_headless:
-                    cv2.destroyAllWindows()
+                    cv2.destroyAllWindows()  # pylint: disable=no-member
                 break
 
             if self.should_exit:
