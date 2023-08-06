@@ -181,8 +181,8 @@ class SegThread(threading.Thread):
             dim = (width, height)
             maskzoom = cv2.resize(mask, dim, interpolation=cv2.INTER_NEAREST)
 
-            kernel = np.ones((2, 2), np.uint8)
-            maskzoomblur = cv2.morphologyEx(maskzoom, cv2.MORPH_OPEN, kernel)
+            #kernel = np.ones((2, 2), np.uint8)
+            maskzoomblur = maskzoom #cv2.morphologyEx(maskzoom, cv2.MORPH_OPEN, kernel)
 
             # get extents of object
             # find contours in the binary image
@@ -194,8 +194,22 @@ class SegThread(threading.Thread):
                 self.output.Render(self.overlay)
                 continue
 
-            # get largest countour
+            # get (and show) largest countour. Need to simplify contour a bit to reduce noise
             contourLargest = max(contours, key=cv2.contourArea)
+            perimeter = cv2.arcLength(contourLargest, True)
+            contourLargest = cv2.approxPolyDP(contourLargest, 0.03 * perimeter, True)
+            for i in range(0, len(contourLargest)):
+                curpoint = contourLargest[i-1][0]
+                nextpoint = contourLargest[i][0]
+                overlayX1 = int((curpoint[0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
+                overlayY1 = int((curpoint[1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
+                overlayX2 = int((nextpoint[0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
+                overlayY2 = int((nextpoint[1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
+                cudaDrawLine(self.overlay,
+                             [overlayX1, overlayY1],
+                             [overlayX2, overlayY2],
+                             (255, 0, 0),
+                             3)  # (x1,y1), (x2,y2), color, thickness
 
             # Split ROI into horizontal strips
             x1, y1, w, h = cv2.boundingRect(contourLargest)
@@ -236,21 +250,21 @@ class SegThread(threading.Thread):
             # print("Len={0:.0f}, Bearing={1:.1f}".format(lenvec, np.rad2deg(bearing_rel)))
             # print("Grid is " + str(self.net.GetGridSize()))
             # print("Thres is " + str(1.6 * self.net.GetGridSize()[1]))
-            if lenvec < 1.6*self.net.GetGridSize()[1] and bearing_rel == np.clip(bearing_rel, -np.pi/4, np.pi/4):
+            if lenvec < 2*self.net.GetGridSize()[1] and bearing_rel == np.clip(bearing_rel, -np.pi/4, np.pi/4):
 
                 # and draw line between centroids
-                for i in range(len(centroids)-1):
+                for i in range(len(centroids)):
                     # cv2.line(maskzoomblur, centroids[i], centroids[i+1], (128, 128, 128), 2)
                     # Video overlay
-                    overlayX1 = int((centroids[i][0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
-                    overlayY1 = int((centroids[i][1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
-                    overlayX2 = int((centroids[i+1][0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
-                    overlayY2 = int((centroids[i+1][1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
+                    overlayX1 = int((centroids[i-1][0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
+                    overlayY1 = int((centroids[i-1][1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
+                    overlayX2 = int((centroids[i][0]/(scale_percent/100)) * (img_input.shape[1] / grid_width))
+                    overlayY2 = int((centroids[i][1]/(scale_percent/100)) * (img_input.shape[0] / grid_height))
                     cudaDrawLine(self.overlay,
                                  [overlayX1, overlayY1],
                                  [overlayX2, overlayY2],
                                  (255, 255, 255),
-                                 5)  # (x1,y1), (x2,y2), color, thickness
+                                 4)  # (x1,y1), (x2,y2), color, thickness
 
                 # Then average to smooth out over the last self.numAveraging readings.
                 with self.threadLock:
@@ -266,9 +280,9 @@ class SegThread(threading.Thread):
             #     if k == 27:
             #         break
             if self.getBearing() != None:
-                bearingstr = "{0:.1f}".format(self.getBearing())
+                bearingstr = "Rel bearing: {0:.1f} deg".format(self.getBearing())
             else:
-                bearingstr = "N/A"
+                bearingstr = "Rel bearing: N/A"
             self.font.OverlayText(self.overlay,
                                   img_input.shape[1],
                                   img_input.shape[0],
@@ -326,7 +340,7 @@ if __name__ == '__main__':
     parser.add_argument("--network", type=str, default="fcn-resnet18-cityscapes-1024x512", help="pre-trained model to load")
     parser.add_argument("--filter-mode", type=str, default="point", choices=["point", "linear"], help="filtering mode used during visualization, options are:\n  'point' or 'linear' (default: 'point')")
     parser.add_argument("--ignore-class", type=str, default="void", help="optional name of class to ignore in the visualization results (default: 'void')")
-    parser.add_argument("--alpha", type=float, default=64.0, help="alpha blending value to use during overlay, between 0.0 and 255.0 (default: 150.0)")
+    parser.add_argument("--alpha", type=float, default=80.0, help="alpha blending value to use during overlay, between 0.0 and 255.0 (default: 150.0)")
     parser.add_argument("--targetclass", type=int, default=3, help="The item class to track")
 
     is_headless = ["--headless"] if sys.argv[0].find('console.py') != -1 else [""]

@@ -79,7 +79,7 @@ if __name__ == '__main__':
     parser.add_argument("--network", type=str, default="fcn-resnet18-cityscapes-1024x512", help="pre-trained model to load")
     parser.add_argument("--filter-mode", type=str, default="point", choices=["point", "linear"], help="filtering mode used during visualization, options are:\n  'point' or 'linear' (default: 'point')")
     parser.add_argument("--ignore-class", type=str, default="void", help="optional name of class to ignore in the visualization results (default: 'void')")
-    parser.add_argument("--alpha", type=float, default=10.0, help="alpha blending value to use during overlay, between 0.0 and 255.0 (default: 150.0)")
+    parser.add_argument("--alpha", type=float, default=80.0, help="alpha blending value to use during overlay, between 0.0 and 255.0 (default: 150.0)")
     parser.add_argument("--targetclass", type=int, default=3, help="The item class to track")
     parser.add_argument("--vel", type=float, default=0.6, help="Forward velocity setpoint")
 
