@@ -8,8 +8,8 @@ import threading
 import signal
 import sys
 import time
-from jetson_inference import segNet
-from jetson_utils import videoSource, videoOutput
+from jetson_inference import segNet  # pylint: disable=import-error
+from jetson_utils import videoSource, videoOutput  # pylint: disable=import-error
 import numpy as np
 
 from segmav import SegThread, VideoThread
