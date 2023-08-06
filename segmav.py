@@ -22,8 +22,8 @@ import time
 import signal
 from datetime import datetime
 
-from jetson_inference import segNet
-from jetson_utils import videoSource, videoOutput, cudaDeviceSynchronize, cudaAllocMapped, cudaToNumpy, cudaDrawCircle, cudaDrawLine, cudaDrawRect, cudaFont
+from jetson_inference import segNet  # pylint: disable=import-error
+from jetson_utils import videoSource, videoOutput, cudaDeviceSynchronize, cudaAllocMapped, cudaToNumpy, cudaDrawCircle, cudaDrawLine, cudaDrawRect, cudaFont  # pylint: disable=import-error
 
 exit_event = threading.Event()
 
