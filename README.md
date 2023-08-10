@@ -11,17 +11,21 @@ This angle is coded into a MAVLink message and sent to a connected ArduPilot fli
 
 ## How it works
 
-Semantic segmentation
+This section references the screenshot at the top of this page.
 
-OpenCV blur and resize
-OpenCV get biggest contour (blob)
+Semantic segmentation is used to separate the captured image into label areas: "Sky, Grass, Road, etc".
 
-Split this contour into two (halfway in the horizonal place)
-Get centroid of each half
-Get angle of line between the two centroids
-Run angle through a 5-point running average
+The largest area (contour) with a "road" label (purple) is then found (red polygon).
 
-Send angle via MAVLink message ``SET_POSITION_TARGET_LOCAL_NED``, in Body (relative) frame and the
+This contour is then split into two - halfway in the horizontal plane (blue boxes).
+
+The centroid of each half is calculated (white points). 
+
+A line is drawn between the two points and the angle calculated (white line).
+
+The angle is put through a 3 point moving average to smooth out any large changes.
+
+This angle is encoded into a MAVLink message ``SET_POSITION_TARGET_LOCAL_NED``, in Body (relative) frame and the
 forward velocity and yaw components.
 
 

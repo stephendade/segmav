@@ -302,6 +302,8 @@ class SegThread(threading.Thread):
                     if len(self.bearings) > self.numAveraging:
                         self.bearings = self.bearings[-self.numAveraging:]
                     self.timeOfLastUpdate = time.time()
+            else:
+                print("Contour not strong enough to get bearing")
 
             # Show debug window in OpenCV
             # if not self.is_headless:
