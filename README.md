@@ -9,6 +9,8 @@ blobs and determine the angle to the centre of the blob.
 
 This angle is coded into a MAVLink message and sent to a connected ArduPilot flight controller.
 
+A video demonstration is available at https://youtu.be/aOMq3tztdVY.
+
 ## How it works
 
 This section references the screenshot at the top of this page.
